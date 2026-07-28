@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thank you — Claude Exporter Pro</title>
+  <meta name="robots" content="noindex">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f6f7f9;
+      color: #2c313a;
+      text-align: center;
+    }
+    .card {
+      max-width: 440px;
+      padding: 32px;
+    }
+    h1 { color: #c96442; font-size: 22px; margin: 0 0 12px; }
+    p { line-height: 1.6; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <!--
+    This page intentionally has no logic of its own. The extension's
+    background service worker watches for navigation to this URL
+    (chrome.tabs.onUpdated) and refreshes the subscription status from the
+    Cloudflare Worker as soon as it's reached — no code here needs to run.
+  -->
+  <div class="card">
+    <h1>Thanks for subscribing! 🎉</h1>
+    <p>
+      Your Claude Exporter Pro subscription is being activated. You can close
+      this tab now — the extension unlocks unlimited exports automatically
+      within a few seconds.
+    </p>
+  </div>
+</body>
+</html>

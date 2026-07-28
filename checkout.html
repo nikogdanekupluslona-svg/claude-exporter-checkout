@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claude Exporter Pro — Checkout</title>
+  <meta name="robots" content="noindex">
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f6f7f9;
+      color: #2c313a;
+    }
+    #status {
+      max-width: 420px;
+      text-align: center;
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .spinner {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 16px;
+      border: 3px solid #e2e4e9;
+      border-top-color: #c96442;
+      border-radius: 50%;
+      animation: ce-spin 0.8s linear infinite;
+    }
+    @keyframes ce-spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="status">
+    <div class="spinner"></div>
+    <div id="statusText">Opening checkout…</div>
+  </div>
+
+  <script>
+    // These two values must match config.js in the extension repo (they
+    // can't be shared directly because this page is served separately by
+    // GitHub Pages and cannot load the extension's files).
+    const PADDLE_CLIENT_TOKEN = 'REPLACE_WITH_PADDLE_CLIENT_TOKEN';
+    const PADDLE_PRICE_ID = 'REPLACE_WITH_PADDLE_PRICE_ID';
+    // Switch to 'sandbox' while testing against a Paddle Sandbox account.
+    const PADDLE_ENVIRONMENT = 'production';
+
+    const statusText = document.getElementById('statusText');
+    const params = new URLSearchParams(window.location.search);
+    const deviceId = params.get('deviceId');
+
+    if (!deviceId) {
+      statusText.textContent = 'Missing device id — please reopen this page from the "Upgrade" button inside the extension.';
+    } else if (PADDLE_CLIENT_TOKEN.indexOf('REPLACE_WITH') === 0 || PADDLE_PRICE_ID.indexOf('REPLACE_WITH') === 0) {
+      statusText.textContent = 'Checkout is not configured yet. See worker/README.md and README.md for setup steps.';
+    } else {
+      const successUrl = window.location.href.replace(/checkout\.html.*$/, 'success.html');
+
+      Paddle.Environment.set(PADDLE_ENVIRONMENT);
+      Paddle.Initialize({ token: PADDLE_CLIENT_TOKEN });
+      Paddle.Checkout.open({
+        items: [{ priceId: PADDLE_PRICE_ID, quantity: 1 }],
+        customData: { deviceId: deviceId },
+        settings: { successUrl: successUrl }
+      });
+    }
+  </script>
+</body>
+</html>
