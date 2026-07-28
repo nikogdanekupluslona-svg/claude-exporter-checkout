@@ -33,6 +33,37 @@
       animation: ce-spin 0.8s linear infinite;
     }
     @keyframes ce-spin { to { transform: rotate(360deg); } }
+    #planPicker { display: none; }
+    #planPicker h1 { font-size: 19px; margin: 0 0 20px; }
+    .plans {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .plan-btn {
+      flex: 1;
+      cursor: pointer;
+      border: 2px solid #e2e4e9;
+      border-radius: 10px;
+      background: #fff;
+      padding: 16px 12px;
+      font-family: inherit;
+      text-align: center;
+      transition: border-color 0.15s;
+    }
+    .plan-btn:hover { border-color: #c96442; }
+    .plan-btn .label { font-size: 15px; font-weight: 600; color: #2c313a; }
+    .plan-btn .sub { font-size: 12px; color: #6b6f76; margin-top: 4px; }
+    .badge {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #1a7f4b;
+      background: #e5f6ec;
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
     footer {
       position: fixed;
       bottom: 16px;
@@ -50,36 +81,72 @@
     <div class="spinner"></div>
     <div id="statusText">Opening checkout…</div>
   </div>
+
+  <div id="planPicker">
+    <h1>Choose your Claude Exporter Pro plan</h1>
+    <div class="plans">
+      <button class="plan-btn" id="planMonthly" type="button">
+        <div class="label">Monthly</div>
+        <div class="sub">Billed every month</div>
+      </button>
+      <button class="plan-btn" id="planAnnual" type="button">
+        <div class="label">Annual</div>
+        <div class="sub">Billed every year</div>
+        <div class="badge">Best value</div>
+      </button>
+    </div>
+  </div>
+
   <footer>
     <a href="terms.html">Terms of Service</a>·<a href="privacy.html">Privacy Notice</a>·<a href="refund.html">Refund Policy</a>
   </footer>
 
   <script>
-    // These two values must match config.js in the extension repo (they
-    // can't be shared directly because this page is served separately by
-    // GitHub Pages and cannot load the extension's files).
-    const PADDLE_CLIENT_TOKEN = 'REPLACE_WITH_PADDLE_CLIENT_TOKEN';
-    const PADDLE_PRICE_ID = 'REPLACE_WITH_PADDLE_PRICE_ID';
+    // These values must match config.js in the extension repo (they can't
+    // be shared directly because this page is served separately by GitHub
+    // Pages and cannot load the extension's files).
+    const PADDLE_CLIENT_TOKEN = 'live_28b4a606e53f3c3a3dce1ae8d4d';
+    const PADDLE_PRICE_ID_MONTHLY = 'pri_01kymz78pqb120pfvkncgp3509';
+    const PADDLE_PRICE_ID_ANNUAL = 'pri_01kyn0gkmqkrkq7kdr0y0pdy17';
     // Switch to 'sandbox' while testing against a Paddle Sandbox account.
     const PADDLE_ENVIRONMENT = 'production';
 
+    const statusEl = document.getElementById('status');
     const statusText = document.getElementById('statusText');
+    const planPicker = document.getElementById('planPicker');
     const params = new URLSearchParams(window.location.search);
     const deviceId = params.get('deviceId');
+    const requestedPlan = params.get('plan'); // optional deep link: ?plan=monthly|annual
 
-    if (!deviceId) {
-      statusText.textContent = 'Missing device id — please reopen this page from the "Upgrade" button inside the extension.';
-    } else if (PADDLE_CLIENT_TOKEN.indexOf('REPLACE_WITH') === 0 || PADDLE_PRICE_ID.indexOf('REPLACE_WITH') === 0) {
-      statusText.textContent = 'Checkout is not configured yet. See worker/README.md and README.md for setup steps.';
-    } else {
+    function openCheckout(priceId) {
       const successUrl = window.location.href.replace(/checkout\.html.*$/, 'success.html');
+      planPicker.style.display = 'none';
+      statusEl.style.display = 'block';
+      statusText.textContent = 'Opening checkout…';
 
       Paddle.Environment.set(PADDLE_ENVIRONMENT);
       Paddle.Initialize({ token: PADDLE_CLIENT_TOKEN });
       Paddle.Checkout.open({
-        items: [{ priceId: PADDLE_PRICE_ID, quantity: 1 }],
+        items: [{ priceId: priceId, quantity: 1 }],
         customData: { deviceId: deviceId },
         settings: { successUrl: successUrl }
+      });
+    }
+
+    if (!deviceId) {
+      statusText.textContent = 'Missing device id — please reopen this page from the "Upgrade" button inside the extension.';
+    } else if (PADDLE_CLIENT_TOKEN.indexOf('REPLACE_WITH') === 0 || PADDLE_PRICE_ID_MONTHLY.indexOf('REPLACE_WITH') === 0) {
+      statusText.textContent = 'Checkout is not configured yet. See worker/README.md and README.md for setup steps.';
+    } else if (requestedPlan === 'monthly' || requestedPlan === 'annual') {
+      openCheckout(requestedPlan === 'annual' ? PADDLE_PRICE_ID_ANNUAL : PADDLE_PRICE_ID_MONTHLY);
+    } else {
+      statusEl.style.display = 'none';
+      planPicker.style.display = 'block';
+      document.getElementById('planMonthly').addEventListener('click', function () {
+        openCheckout(PADDLE_PRICE_ID_MONTHLY);
+      });
+      document.getElementById('planAnnual').addEventListener('click', function () {
+        openCheckout(PADDLE_PRICE_ID_ANNUAL);
       });
     }
   </script>
