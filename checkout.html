@@ -7,6 +7,7 @@
   <meta name="robots" content="noindex">
   <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
   <style>
+    * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       display: flex;
@@ -14,14 +15,18 @@
       justify-content: center;
       min-height: 100vh;
       margin: 0;
+      padding: 40px 16px 88px;
       background: #f6f7f9;
       color: #2c313a;
     }
+
+    /* ----- Loading / redirect state (used for ?plan= deep links) ----- */
     #status {
       max-width: 420px;
       text-align: center;
       padding: 24px;
       line-height: 1.5;
+      display: none;
     }
     .spinner {
       width: 28px;
@@ -33,37 +38,183 @@
       animation: ce-spin 0.8s linear infinite;
     }
     @keyframes ce-spin { to { transform: rotate(360deg); } }
-    #planPicker { display: none; }
-    #planPicker h1 { font-size: 19px; margin: 0 0 20px; }
-    .plans {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 8px;
+
+    /* ----- Paywall card ----- */
+    #paywall {
+      position: relative;
+      max-width: 460px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(44, 49, 58, 0.12), 0 2px 8px rgba(44, 49, 58, 0.06);
+      padding: 36px 32px 32px;
+      text-align: center;
     }
-    .plan-btn {
-      flex: 1;
+    .ce-close {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9a9ea6;
+      text-decoration: none;
+      font-size: 20px;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s;
+    }
+    .ce-close:hover { background: #f0f1f4; color: #2c313a; }
+
+    .ce-icon {
+      width: 68px;
+      height: 68px;
+      margin: 0 auto 18px;
+      display: block;
+    }
+
+    h1.ce-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 8px;
+      line-height: 1.3;
+    }
+    .ce-subtitle {
+      font-size: 14.5px;
+      color: #6b6f76;
+      margin: 0 0 18px;
+      line-height: 1.5;
+    }
+
+    .ce-trust {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 22px;
+    }
+    .ce-trust span {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #6b6f76;
+      background: #f0f1f4;
+      border-radius: 999px;
+      padding: 4px 10px;
+    }
+
+    .ce-features {
+      list-style: none;
+      margin: 0 0 24px;
+      padding: 0;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .ce-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: #2c313a;
+    }
+    .ce-features li .tick {
+      flex: 0 0 18px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #c96442;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+
+    .ce-plans {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .ce-plan {
+      position: relative;
       cursor: pointer;
       border: 2px solid #e2e4e9;
-      border-radius: 10px;
+      border-radius: 12px;
       background: #fff;
-      padding: 16px 12px;
-      font-family: inherit;
-      text-align: center;
-      transition: border-color 0.15s;
+      padding: 14px 16px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: border-color 0.15s, background 0.15s;
     }
-    .plan-btn:hover { border-color: #c96442; }
-    .plan-btn .label { font-size: 15px; font-weight: 600; color: #2c313a; }
-    .plan-btn .sub { font-size: 12px; color: #6b6f76; margin-top: 4px; }
-    .badge {
-      display: inline-block;
-      margin-top: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      color: #1a7f4b;
-      background: #e5f6ec;
+    .ce-plan:hover { border-color: #d9a189; }
+    .ce-plan.selected { border-color: #c96442; background: #fdf5f2; }
+    .ce-plan-left { display: flex; flex-direction: column; gap: 2px; }
+    .ce-plan-name { font-size: 15px; font-weight: 600; color: #2c313a; }
+    .ce-plan-sub { font-size: 12px; color: #6b6f76; }
+    .ce-plan-price { font-size: 16px; font-weight: 700; color: #2c313a; white-space: nowrap; }
+    .ce-plan-price span { font-size: 12px; font-weight: 500; color: #6b6f76; }
+    .ce-plan-badge {
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #fff;
+      background: #c96442;
       border-radius: 999px;
-      padding: 2px 8px;
+      padding: 3px 9px;
+      text-transform: uppercase;
     }
+    .ce-plan-radio {
+      flex: 0 0 18px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #d5d8dd;
+      margin-right: 12px;
+      position: relative;
+    }
+    .ce-plan.selected .ce-plan-radio { border-color: #c96442; }
+    .ce-plan.selected .ce-plan-radio::after {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border-radius: 50%;
+      background: #c96442;
+    }
+    .ce-plan-row { display: flex; align-items: center; }
+
+    .ce-cta {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      background: #c96442;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 15px 18px;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-transform: uppercase;
+    }
+    .ce-cta:hover { background: #a85335; }
+    .ce-micro {
+      font-size: 12px;
+      color: #9a9ea6;
+      margin: 14px 0 0;
+    }
+
     footer {
       position: fixed;
       bottom: 16px;
@@ -82,19 +233,67 @@
     <div id="statusText">Opening checkout…</div>
   </div>
 
-  <div id="planPicker">
-    <h1>Choose your Claude Exporter Pro plan</h1>
-    <div class="plans">
-      <button class="plan-btn" id="planMonthly" type="button">
-        <div class="label">Monthly</div>
-        <div class="sub">Billed every month</div>
-      </button>
-      <button class="plan-btn" id="planAnnual" type="button">
-        <div class="label">Annual</div>
-        <div class="sub">Billed every year</div>
-        <div class="badge">Best value</div>
-      </button>
+  <div id="paywall">
+    <a href="https://claude.ai/" class="ce-close" aria-label="Close">×</a>
+
+    <svg class="ce-icon" viewBox="0 0 128 128" role="img" aria-label="Claude Exporter">
+      <defs>
+        <linearGradient id="bg" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0%" stop-color="#d97757"/>
+          <stop offset="100%" stop-color="#c96442"/>
+        </linearGradient>
+      </defs>
+      <circle cx="64" cy="62" r="56" fill="url(#bg)"/>
+      <g fill="none" stroke="#ffffff" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M86 74v8a4 4 0 0 1-4 4H46a4 4 0 0 1-4-4v-8"/>
+        <polyline points="50 58 64 72 78 58"/>
+        <line x1="64" y1="72" x2="64" y2="28"/>
+      </g>
+    </svg>
+
+    <h1 class="ce-title">Never hit an export limit again.</h1>
+    <p class="ce-subtitle">Unlimited exports of your Claude.ai chats — every format, one click at a time.</p>
+
+    <div class="ce-trust">
+      <span>No account needed</span>
+      <span>Cancel anytime</span>
+      <span>Secured by Paddle</span>
     </div>
+
+    <ul class="ce-features">
+      <li><span class="tick">✓</span>Unlimited exports — no more 3-chat limit</li>
+      <li><span class="tick">✓</span>Bulk-export your entire chat history in one click</li>
+      <li><span class="tick">✓</span>Export as JSON, Markdown, plain text, XML, or PNG</li>
+      <li><span class="tick">✓</span>Code blocks &amp; artifacts kept fully intact</li>
+      <li><span class="tick">✓</span>Free access to every new export format</li>
+    </ul>
+
+    <div class="ce-plans">
+      <div class="ce-plan" id="planMonthly" data-plan="monthly">
+        <div class="ce-plan-row">
+          <div class="ce-plan-radio"></div>
+          <div class="ce-plan-left">
+            <div class="ce-plan-name">Monthly</div>
+            <div class="ce-plan-sub">Billed every month</div>
+          </div>
+        </div>
+        <div class="ce-plan-price">$3.99<span>/mo</span></div>
+      </div>
+      <div class="ce-plan selected" id="planAnnual" data-plan="annual">
+        <div class="ce-plan-badge">Best value · Save 44%</div>
+        <div class="ce-plan-row">
+          <div class="ce-plan-radio"></div>
+          <div class="ce-plan-left">
+            <div class="ce-plan-name">Annual</div>
+            <div class="ce-plan-sub">≈ $2.25/mo, billed yearly</div>
+          </div>
+        </div>
+        <div class="ce-plan-price">$26.99<span>/yr</span></div>
+      </div>
+    </div>
+
+    <button type="button" class="ce-cta" id="ceCtaBtn">Unlock unlimited exports</button>
+    <p class="ce-micro">14-day money-back guarantee · Cancel anytime</p>
   </div>
 
   <footer>
@@ -113,14 +312,16 @@
 
     const statusEl = document.getElementById('status');
     const statusText = document.getElementById('statusText');
-    const planPicker = document.getElementById('planPicker');
+    const paywallEl = document.getElementById('paywall');
     const params = new URLSearchParams(window.location.search);
     const deviceId = params.get('deviceId');
     const requestedPlan = params.get('plan'); // optional deep link: ?plan=monthly|annual
 
+    let selectedPlan = 'annual';
+
     function openCheckout(priceId) {
       const successUrl = window.location.href.replace(/checkout\.html.*$/, 'success.html');
-      planPicker.style.display = 'none';
+      paywallEl.style.display = 'none';
       statusEl.style.display = 'block';
       statusText.textContent = 'Opening checkout…';
 
@@ -133,21 +334,31 @@
       });
     }
 
+    function priceIdFor(plan) {
+      return plan === 'monthly' ? PADDLE_PRICE_ID_MONTHLY : PADDLE_PRICE_ID_ANNUAL;
+    }
+
+    function selectPlan(plan) {
+      selectedPlan = plan;
+      document.getElementById('planMonthly').classList.toggle('selected', plan === 'monthly');
+      document.getElementById('planAnnual').classList.toggle('selected', plan === 'annual');
+    }
+
     if (!deviceId) {
+      paywallEl.style.display = 'none';
+      statusEl.style.display = 'block';
       statusText.textContent = 'Missing device id — please reopen this page from the "Upgrade" button inside the extension.';
     } else if (PADDLE_CLIENT_TOKEN.indexOf('REPLACE_WITH') === 0 || PADDLE_PRICE_ID_MONTHLY.indexOf('REPLACE_WITH') === 0) {
+      paywallEl.style.display = 'none';
+      statusEl.style.display = 'block';
       statusText.textContent = 'Checkout is not configured yet. See worker/README.md and README.md for setup steps.';
     } else if (requestedPlan === 'monthly' || requestedPlan === 'annual') {
-      openCheckout(requestedPlan === 'annual' ? PADDLE_PRICE_ID_ANNUAL : PADDLE_PRICE_ID_MONTHLY);
+      paywallEl.style.display = 'none';
+      openCheckout(priceIdFor(requestedPlan));
     } else {
-      statusEl.style.display = 'none';
-      planPicker.style.display = 'block';
-      document.getElementById('planMonthly').addEventListener('click', function () {
-        openCheckout(PADDLE_PRICE_ID_MONTHLY);
-      });
-      document.getElementById('planAnnual').addEventListener('click', function () {
-        openCheckout(PADDLE_PRICE_ID_ANNUAL);
-      });
+      document.getElementById('planMonthly').addEventListener('click', () => selectPlan('monthly'));
+      document.getElementById('planAnnual').addEventListener('click', () => selectPlan('annual'));
+      document.getElementById('ceCtaBtn').addEventListener('click', () => openCheckout(priceIdFor(selectedPlan)));
     }
   </script>
 </body>
