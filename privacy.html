@@ -55,7 +55,23 @@
     personal identifiers.
   </p>
 
-  <h2>3. Payment data</h2>
+  <h2>3. Restoring a purchase with Google Sign-In</h2>
+  <p>
+    Chrome deletes the random device identifier above if you uninstall the
+    extension, so a plain reinstall can't automatically recognize an existing
+    subscription. If you use the optional <strong>"Restore purchase"</strong>
+    button, the extension asks Google for a one-time, verified confirmation of
+    which Google account you picked (via Chrome's built-in
+    <code>chrome.identity</code> sign-in, not a login system of our own) and
+    sends it to our subscription-status service <em>only</em> to look up a
+    matching subscription and re-link it to your new device identifier. We
+    never store your name, profile photo, or anything else from your Google
+    account — only the email address, and only to perform this lookup. This
+    step is entirely optional and is never triggered automatically or without
+    your explicit action.
+  </p>
+
+  <h2>4. Payment data</h2>
   <p>
     All payment details (card number, billing address, etc.) are collected
     and processed directly by
@@ -66,14 +82,14 @@
     for how they handle your data.
   </p>
 
-  <h2>4. Data retention</h2>
+  <h2>5. Data retention</h2>
   <p>
     Subscription-status records are kept only for as long as needed to
     determine whether your subscription is active, and are removed on
     request.
   </p>
 
-  <h2>5. Your rights</h2>
+  <h2>6. Your rights</h2>
   <p>
     You can request deletion of your subscription-status record at any
     time by emailing us with the request (see below) — we can locate it
@@ -81,7 +97,7 @@
     anything else that could identify you.
   </p>
 
-  <h2>6. Contact</h2>
+  <h2>7. Contact</h2>
   <p>
     Questions about this notice? Email
     <a href="mailto:smmfedorova@gmail.com">smmfedorova@gmail.com</a>.

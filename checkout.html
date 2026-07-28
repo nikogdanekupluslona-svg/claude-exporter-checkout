@@ -316,6 +316,13 @@
     const params = new URLSearchParams(window.location.search);
     const deviceId = params.get('deviceId');
     const requestedPlan = params.get('plan'); // optional deep link: ?plan=monthly|annual
+    // Optional: a Google OAuth access token the extension already obtained
+    // (only present if the user previously used "Restore purchase" and
+    // granted access). Not used as a Paddle billing field — it's only our
+    // own recovery key so a future reinstall on the same Google account can
+    // restore Pro. The Worker verifies this token against Google before
+    // trusting the email it reports — see worker/src/index.js.
+    const googleToken = params.get('googleToken');
 
     let selectedPlan = 'annual';
 
@@ -325,11 +332,14 @@
       statusEl.style.display = 'block';
       statusText.textContent = 'Opening checkout…';
 
+      const customData = { deviceId: deviceId };
+      if (googleToken) customData.googleToken = googleToken;
+
       Paddle.Environment.set(PADDLE_ENVIRONMENT);
       Paddle.Initialize({ token: PADDLE_CLIENT_TOKEN });
       Paddle.Checkout.open({
         items: [{ priceId: priceId, quantity: 1 }],
-        customData: { deviceId: deviceId },
+        customData: customData,
         settings: { successUrl: successUrl }
       });
     }
